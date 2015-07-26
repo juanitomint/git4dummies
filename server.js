@@ -160,44 +160,6 @@ function queuer() {
      * bind to fs events
      */
     // Full list of options. See below for descriptions.
-var customGitSync= function(command, options, args, callback, encoding) {
-      var bash, ref1, ref2;
-      if (!callback) {
-        ref1 = [args, callback], callback = ref1[0], args = ref1[1];
-      }
-      if (!callback) {
-        ref2 = [options, callback], callback = ref2[0], options = ref2[1];
-      }
-      if (options == null) {
-        options = {};
-      }
-      options = options_to_argv(options);
-      options = options.join(" ");
-      if (args == null) {
-        args = [];
-      }
-      if (args instanceof Array) {
-        args = args.join(" ");
-      }
-      if (encoding == null) {
-        encoding = 'utf8';
-      }
-      bash = (git_options.bin || Git.bin) + " " + command + " " + options + " " + args;
-      console.log('GIT :: '+ bash);
-      try {
-      var stdout=exec(bash, {
-        cwd: git_dir,
-        encoding: encoding,
-        maxBuffer: 5000 * 1024
-      });
-      } catch(err){
-        console.log(err);
-        var stdout=err.message;
-      }
-      if(callback)
-        callback(null,stdout);
-      return bash;
-    };
 function startWatch(path) {
 
         watcher = chokidar.watch(path, {
