@@ -1,0 +1,9 @@
+{
+    "path": "/home/sebax/Desktop/dropfolder",
+    "path_back_up": "/home/sebax/Desktop/backup-folder",
+    "api_url": "http://127.0.0.1:3000/api",
+    "notify_url": "http://127.0.0.1:8088/services/notify",
+    "enableLog": false,
+    "watcherUser": 1,
+    "pendingStatus" : "pendiente"
+}
