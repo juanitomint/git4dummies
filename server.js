@@ -35,7 +35,6 @@ readJSON(baseDir + '/config/config.json', function(data, err) {
 
 //---bind to repo
 var repo = git(config.path);
-console.log(repo.git);
 /**
  * For NW
  */
@@ -110,10 +109,12 @@ if (hasnw) {
 
                     default:
                         repo.git(cmd, [], args, function(err, stdout) {
-                            terminal.output(nl2br(stdout));
+                            terminal.output(nl2br(stdout))
+                            gitBranch();
                         })
                         return '';
                 };
+                
             }
         });
     }
@@ -133,9 +134,8 @@ if (hasnw) {
         console.log('catch: gitConfig', err, config);
         terminal.output('welcome:' + user.name);
     });
-    
+
     emitter.on('gitBranch', function(err, branch) {
-        terminal.output(nl2br('\nOn branch:' + branch.name));
         terminal.setPrompt('git [' + branch.name + '] ');
     });
     terminal.output('<h1>GIT4DUMMIES</h1>');
@@ -145,7 +145,6 @@ if (hasnw) {
  */
 
 gitConfig();
-gitBranch();
 processStatus();
 
 //gitBranch(gitSync);
@@ -232,7 +231,7 @@ function processStatus() {
             console.log(status);
             var queue = [];
             var msg = [];
-            var isAll = false;
+            var doCommit = false;
             Object.keys(status.files).forEach(function(path) {
                     var st = status.files[path]
                     console.log('Pocessing: ' + path, st);
@@ -240,6 +239,7 @@ function processStatus() {
                         case 'D':
                             msg.push('Removed file: ' + path)
                             gitRemove(path);
+                            doCommit = true;
                             break;
                         case 'A':
                             break;
@@ -248,7 +248,6 @@ function processStatus() {
                         case 'AM':
                             break;
                         case 'UU':
-                            isAll = true;
                             //----define keep strategy as defined on config.onConfllict
                             var first = (config.onConflict == 'ours') ? 'theirs' : 'ours';
                             var second = (config.onConflict == 'ours') ? 'ours' : 'theirs';
@@ -278,6 +277,7 @@ function processStatus() {
                                 }));
 
                                 if (config.commitConflicted) {
+                                    doCommit = true;
                                     console.log('add ' + path + ' --force ' + modified_file);
                                     repo.git('add', [], '--force -- ' + path + '.save', function(err) {
                                         if (err) console.log(err);
@@ -306,11 +306,13 @@ function processStatus() {
                                 if (path.indexOf(config.keepedPrefix) != -1) {
                                     if (config.commitConflicted) {
                                         msg.push('Added untracked file: ' + path);
+                                        doCommit = true;
                                         gitAdd(path);
                                     }
                                 }
                                 else {
                                     msg.push('Added untracked file: ' + path);
+                                    doCommit = true;
                                     gitAdd(path);
 
                                 }
@@ -321,12 +323,14 @@ function processStatus() {
                     console.log('---------------------------');
                 } //---end forEach
             );
-            console.log('Make Commit ');
-            repo.commit('Saved changes:\n' + msg.join('\n'), {
-                'all': true
-            }, function(err) {
-                if (err) console.log(err);
-            });
+            if (doCommit) {
+                console.log('Make Commit ');
+                repo.commit('Saved changes:\n' + msg.join('\n'), {
+                    'all': true
+                }, function(err) {
+                    if (err) console.log(err);
+                });
+            }
             startWatch(repo.path);
             //process.exit();
         });
@@ -354,7 +358,7 @@ function gitCommit(message, path, callback) {
 
 function gitBranch(name) {
         if (name) {
-            repo.branch(name,function(err, branch) {
+            repo.branch(name, function(err, branch) {
                 emitter.emit('gitBranch', err, branch);
             });
         }
@@ -376,6 +380,7 @@ function gitConfig(callback) {
             user.email = config.items['user.email'];
             emitter.emit('gitConfig', err, config);
             repo.branch(function(err, branch) {
+                terminal.output(nl2br('\nOn branch:' + branch.name));
                 terminal.setPrompt('git [' + branch.name + '] ');
             })
             if (callback)
