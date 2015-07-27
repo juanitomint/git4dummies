@@ -16,7 +16,7 @@ var chokidar = require('chokidar');
 var utf8 = require('utf8');
 var watcher;
 var async = require('async');
-var nl2br  = require('nl2br');
+var nl2br = require('nl2br');
 var exec = require('child_process').execSync;
 
 
@@ -109,7 +109,7 @@ if (hasnw) {
                         return '1.0.0';
 
                     default:
-                        repo.git(cmd,[],args,function(err,stdout){
+                        repo.git(cmd, [], args, function(err, stdout) {
                             terminal.output(nl2br(stdout));
                         })
                         return '';
@@ -121,20 +121,22 @@ if (hasnw) {
      * listen functions
      */
     emitter.on('watcherReady', function(msg) {
-        terminal.output(nl2br('\n'+msg));
+        terminal.output(nl2br('\n' + msg));
 
     });
     emitter.on('gitStatus', function(err, status) {
         console.log('catch: gitStatus', err, status);
-        terminal.output('<br/>Status:'+nl2br((status.clean)?'Clean':'Dirty'));
+        terminal.output('<br/>Status:' + nl2br((status.clean) ? 'Clean' : 'Dirty'));
 
     });
     emitter.on('gitConfig', function(err, config) {
         console.log('catch: gitConfig', err, config);
-    terminal.output('welcome:' +user.name);
-        
-
-
+        terminal.output('welcome:' + user.name);
+    });
+    
+    emitter.on('gitBranch', function(err, branch) {
+        terminal.output(nl2br('\nOn branch:' + branch.name));
+        terminal.setPrompt('git [' + branch.name + '] ');
     });
     terminal.output('<h1>GIT4DUMMIES</h1>');
 }
@@ -143,6 +145,7 @@ if (hasnw) {
  */
 
 gitConfig();
+gitBranch();
 processStatus();
 
 //gitBranch(gitSync);
@@ -162,74 +165,74 @@ function queuer() {
     // Full list of options. See below for descriptions.
 function startWatch(path) {
 
-        watcher = chokidar.watch(path, {
-            persistent: true,
-            ignored: ['.git'],
-            ignoreInitial: true,
-            followSymlinks: true,
-            cwd: path,
+    watcher = chokidar.watch(path, {
+        persistent: true,
+        ignored: ['.git'],
+        ignoreInitial: true,
+        followSymlinks: true,
+        cwd: path,
 
-            usePolling: true,
-            alwaysStat: false,
-            depth: undefined,
-            interval: 100,
+        usePolling: true,
+        alwaysStat: false,
+        depth: undefined,
+        interval: 100,
 
-            ignorePermissionErrors: false,
-            atomic: true
-        });
-        //---Process fs events
-        var log = console.log.bind(console);
-        watcher
-            .on('add', function(path) {
-                queuer();
-                log('File', path, 'has been added');
-                emitter.emit('fileAdd', 'File ' + path + ' has been added');
-            })
-            .on('change', function(path) {
-                queuer();
-                log('File', path, 'has been changed');
-                emitter.emit('fileChange', 'File ' + path + ' has been changed');
-            })
-            .on('unlink', function(path) {
-                queuer();
-                emitter.emit('fileUnlink', 'File ' + path + ' has been unlinked');
-                log('File', path, 'has been removed');
-            })
-            // More events.
-            .on('addDir', function(path) {
-                queuer();
-                emitter.emit('addDir', 'Dir ' + path + ' has been added');
-                log('Directory', path, 'has been added');
-            })
-            .on('unlinkDir', function(path) {
-                queuer();
-                emitter.emit('unlinkDir', 'Dir ' + path + ' has been unlinked');
-                log('Directory', path, 'has been removed');
-            })
-            .on('error', function(error) {
-                emitter.emit('watcherErr', error);
-                log('Error happened', error);
-            })
-            .on('ready', function() {
-                msg=path+"\nInitial scan complete. Ready for changes."
-                emitter.emit('watcherReady', msg);
-                log(msg);
-            })
-            //   .on('raw', function(event, path, details) { log('Raw event info:', event, path, details); })
-    }
+        ignorePermissionErrors: false,
+        atomic: true
+    });
+    //---Process fs events
+    var log = console.log.bind(console);
+    watcher
+        .on('add', function(path) {
+            queuer();
+            log('File', path, 'has been added');
+            emitter.emit('fileAdd', 'File ' + path + ' has been added');
+        })
+        .on('change', function(path) {
+            queuer();
+            log('File', path, 'has been changed');
+            emitter.emit('fileChange', 'File ' + path + ' has been changed');
+        })
+        .on('unlink', function(path) {
+            queuer();
+            emitter.emit('fileUnlink', 'File ' + path + ' has been unlinked');
+            log('File', path, 'has been removed');
+        })
+        // More events.
+        .on('addDir', function(path) {
+            queuer();
+            emitter.emit('addDir', 'Dir ' + path + ' has been added');
+            log('Directory', path, 'has been added');
+        })
+        .on('unlinkDir', function(path) {
+            queuer();
+            emitter.emit('unlinkDir', 'Dir ' + path + ' has been unlinked');
+            log('Directory', path, 'has been removed');
+        })
+        .on('error', function(error) {
+            emitter.emit('watcherErr', error);
+            log('Error happened', error);
+        })
+        .on('ready', function() {
+            msg = path + "\nInitial scan complete. Ready for changes."
+            emitter.emit('watcherReady', msg);
+            log(msg);
+        })
+        //   .on('raw', function(event, path, details) { log('Raw event info:', event, path, details); })
+}
 
 function processStatus() {
 
         console.log('processStatus');
         //---if listening to changes then close
-        if(watcher)
+        if (watcher)
             watcher.close();
-        repo.git('config',[],'core.quotepath false',function(err){});
+        repo.git('config', [], 'core.quotepath false', function(err) {});
         gitStatus(function(err, status) {
             console.log(status);
             var queue = [];
             var msg = [];
-            var isAll=false;
+            var isAll = false;
             Object.keys(status.files).forEach(function(path) {
                     var st = status.files[path]
                     console.log('Pocessing: ' + path, st);
@@ -245,7 +248,7 @@ function processStatus() {
                         case 'AM':
                             break;
                         case 'UU':
-                            isAll=true;
+                            isAll = true;
                             //----define keep strategy as defined on config.onConfllict
                             var first = (config.onConflict == 'ours') ? 'theirs' : 'ours';
                             var second = (config.onConflict == 'ours') ? 'ours' : 'theirs';
@@ -332,19 +335,32 @@ function processStatus() {
      * Git commit
      */
 function gitCommit(message, path, callback) {
-        if (autocommit) {
-            repo.add(path, function() {
-                repo.commit(message, {}, function(err) {
-                    emitter.emit('gitCommit', err, message);
-                    console.log('commited:' + path);
-                    if (!err) {
-                        if (autosync)
-                            gitSync();
-                    }
-                    else {
-                        console.log(err);
-                    }
-                });
+    if (autocommit) {
+        repo.add(path, function() {
+            repo.commit(message, {}, function(err) {
+                emitter.emit('gitCommit', err, message);
+                console.log('commited:' + path);
+                if (!err) {
+                    if (autosync)
+                        gitSync();
+                }
+                else {
+                    console.log(err);
+                }
+            });
+        });
+    }
+}
+
+function gitBranch(name) {
+        if (name) {
+            repo.branch(name,function(err, branch) {
+                emitter.emit('gitBranch', err, branch);
+            });
+        }
+        else {
+            repo.branch(function(err, branch) {
+                emitter.emit('gitBranch', err, branch);
             });
         }
     }
@@ -359,6 +375,9 @@ function gitConfig(callback) {
             user.name = config.items['user.name'];
             user.email = config.items['user.email'];
             emitter.emit('gitConfig', err, config);
+            repo.branch(function(err, branch) {
+                terminal.setPrompt('git [' + branch.name + '] ');
+            })
             if (callback)
                 callback(err, config);
         }
@@ -398,9 +417,9 @@ function sleep(time) {
     return;
 }
 
-    /**
-     * git remove file
-     */
+/**
+ * git remove file
+ */
 function gitRemove(path, callback) {
         console.log('Removed file: ' + path);
         repo.remove(path, function() {
@@ -414,7 +433,7 @@ function gitRemove(path, callback) {
      */
 function gitAdd(path, callback) {
         console.log('Added file: ' + path);
-        repo.add('"'+path+'"', function() {
+        repo.add('"' + path + '"', function() {
             emitter.emit('gitAdd', path);
             if (callback)
                 callback;
