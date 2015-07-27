@@ -1,4 +1,3 @@
-var colors = require('colors');
 console.log('.---------------------------.');
 console.log('| *      GIT4DUMMIES        |');
 console.log('.---------------------------.');
@@ -13,12 +12,11 @@ var git = require("./js/gift-sync");
 var events = require('events');
 var emitter = new events.EventEmitter();
 var chokidar = require('chokidar');
-var utf8 = require('utf8');
 var watcher;
 var async = require('async');
 var nl2br = require('nl2br');
 var exec = require('child_process').execSync;
-
+var moment = require('moment');
 
 //----load config
 console.log('LOADING CONFIG:');
@@ -45,6 +43,7 @@ var gitworking = false;
 var hasnw = true;
 var autocommit = false;
 var autosync = false;
+var firstwatch=false;
 var q;
 var user = {};
 var git_config = {};
@@ -114,7 +113,7 @@ if (hasnw) {
                         })
                         return '';
                 };
-                
+
             }
         });
     }
@@ -132,7 +131,10 @@ if (hasnw) {
     });
     emitter.on('gitConfig', function(err, config) {
         console.log('catch: gitConfig', err, config);
-        terminal.output('welcome:' + user.name);
+        terminal.output(moment().format('hh:mm') + '\nwelcome:' + user.name);
+    });
+    emitter.on('gitCommit', function(err, message) {
+        terminal.output('<hr/>' + moment().format('hh:mm') + '\n' + nl2br(message) + '<hr/>');
     });
 
     emitter.on('gitBranch', function(err, branch) {
@@ -213,9 +215,12 @@ function startWatch(path) {
             log('Error happened', error);
         })
         .on('ready', function() {
-            msg = path + "\nInitial scan complete. Ready for changes."
-            emitter.emit('watcherReady', msg);
-            log(msg);
+            if (!firstwatch) {
+                msg = path + "\nInitial scan complete. Ready for changes."
+                emitter.emit('watcherReady', msg);
+                firstwatch=true;
+                log(msg);
+            }
         })
         //   .on('raw', function(event, path, details) { log('Raw event info:', event, path, details); })
 }
@@ -325,10 +330,12 @@ function processStatus() {
             );
             if (doCommit) {
                 console.log('Make Commit ');
-                repo.commit('Saved changes:\n' + msg.join('\n'), {
+                var message = 'Saved changes:\n' + msg.join('\n');
+                repo.commit(message, {
                     'all': true
                 }, function(err) {
                     if (err) console.log(err);
+                    emitter.emit('gitCommit', err, message);
                 });
             }
             startWatch(repo.path);
