@@ -9,7 +9,7 @@
   "node-mains": "server.js",
   "window": {
     "icon": "./resources/git-branch.png",
-    "toolbar": true,
+    "toolbar": false,
     "frame": true,
     "width": 800,
     "height": 600,

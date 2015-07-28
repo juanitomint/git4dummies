@@ -1,7 +1,7 @@
 #tools {
     position: fixed;
     top: 1em;
-    right: 1em;
+    right: 5px;
     z-index: 10;
 }
 #toggler {

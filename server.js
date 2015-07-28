@@ -217,7 +217,7 @@ function startWatch(path) {
             log('Error happened', error);
         })
         .on('ready', function() {
-            iswatch=true;
+            iswatch = true;
             if (!firstwatch) {
                 msg = path + "\nInitial scan complete. Ready for changes."
                 emitter.emit('watcherReady', msg);
@@ -525,6 +525,16 @@ var watchToggle = function() {
         terminal.output(nl2br('\nWatcher: <strong>on</strong>'));
     }
 };
-$(document).ready(function(){
- $('#toggler').click(watchToggle);
+$(document).ready(function() {
+
+    $('.toggle').toggles({
+        on: true,
+        text: {
+            on: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ON', // text for the ON position
+            off: 'OFF' // and off
+        },
+
+    });
+    $('#toggler').click(watchToggle);
+
 });
