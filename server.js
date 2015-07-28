@@ -43,7 +43,8 @@ var gitworking = false;
 var hasnw = true;
 var autocommit = false;
 var autosync = false;
-var firstwatch=false;
+var firstwatch = false;
+var iswatch = false;
 var q;
 var user = {};
 var git_config = {};
@@ -56,6 +57,7 @@ catch (e) {
     autocommit = true;
     autosync = true;
 }
+
 if (hasnw) {
     // var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see https://github.com/rogerwang/node-webkit/issues/707)
     // Get the current window
@@ -215,10 +217,11 @@ function startWatch(path) {
             log('Error happened', error);
         })
         .on('ready', function() {
+            iswatch=true;
             if (!firstwatch) {
                 msg = path + "\nInitial scan complete. Ready for changes."
                 emitter.emit('watcherReady', msg);
-                firstwatch=true;
+                firstwatch = true;
                 log(msg);
             }
         })
@@ -511,3 +514,17 @@ function readJSON(file, callback) {
         callback({}, err);
     }
 }
+var watchToggle = function() {
+    if (iswatch) {
+        watcher.close();
+        iswatch = false;
+        terminal.output(nl2br('\nWatcher: <strong>off</strong>'));
+    }
+    else {
+        startWatch(repo.path);
+        terminal.output(nl2br('\nWatcher: <strong>on</strong>'));
+    }
+};
+$(document).ready(function(){
+ $('#toggler').click(watchToggle);
+});

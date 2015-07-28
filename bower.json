@@ -1,0 +1,24 @@
+{
+  "name": "git4dummies",
+  "version": "0.1.7",
+  "authors": [
+    "Juan Borda <juanignacioborda@gmail.com>"
+  ],
+  "description": "A simple git automation tool",
+  "main": "index.html",
+  "moduleType": [
+    "node"
+  ],
+  "keywords": [
+    "git",
+    "dummies"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

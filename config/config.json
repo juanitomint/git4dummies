@@ -1,7 +1,7 @@
 {
     "path": "/home/juanb/Desktop/tmp/test/git4dummies",
     "enableLog": false,
-    "opendebug": false,
+    "opendebug": true,
     "startvisible":true,
     "commitConflicted":false,
     "onConflict":"ours",
