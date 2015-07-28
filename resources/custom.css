@@ -3,7 +3,28 @@
     top: 1em;
     right: 5px;
     z-index: 10;
+    /*width:250px;*/
+    /*height:100px;*/
+    /*border:1px dotted red;*/
+    
+    font-family: Inconsolata, monospace;
+    color: white;
 }
-#toggler {
-    /* color: white; */
+.toggle {
+    width: 44px;
+    padding: 10px;
+}
+.action {
+    -webkit-border-radius: 5;
+    -moz-border-radius: 5;
+    border-radius: 4px;
+    background: #424242;
+    text-decoration: none;
+    width: 20px;
+    height: 20px;
+}
+
+.action:hover {
+  background: #055701;
+  color:white;
 }

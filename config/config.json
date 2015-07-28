@@ -3,6 +3,8 @@
     "enableLog": false,
     "opendebug": true,
     "startvisible":true,
+    "autocommit":false,
+    "autosync":true,
     "commitConflicted":false,
     "onConflict":"ours",
     "keepedPrefix":"G4D"
