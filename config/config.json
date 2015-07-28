@@ -1,11 +1,1 @@
-{
-    "path": "/home/juanb/Desktop/tmp/test/git4dummies",
-    "enableLog": false,
-    "opendebug": true,
-    "startvisible":true,
-    "autocommit":false,
-    "autosync":true,
-    "commitConflicted":false,
-    "onConflict":"ours",
-    "keepedPrefix":"G4D"
-}
+{"path":"/home/juanb/Desktop/tmp/test/git4dummies","enableLog":false,"opendebug":false,"startvisible":true,"autocommit":false,"autosync":true,"commitConflicted":false,"onConflict":"ours","keepedPrefix":"G4D"}

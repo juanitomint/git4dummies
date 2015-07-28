@@ -143,7 +143,7 @@ if (hasnw) {
         terminal.setPrompt('git [' + branch.name + '] ');
     });
     emitter.on('gitSync', function(err, message) {
-        terminal.output(nl2br('\n'+message));
+        terminal.output(nl2br('\n' + message));
     });
     terminal.output('<h1>GIT4DUMMIES</h1>');
 }
@@ -484,15 +484,15 @@ function gitSync() {
     //----close watcher if running
     if (iswatch)
         watcher.close();
-     repo.sync(currentRemote, currentBranch,
+    repo.sync(currentRemote, currentBranch,
         function(err) {
-            var message='';
+            var message = '';
             if (!err) {
                 message = 'Synced: ok';
                 //----start watcher
                 if (iswatch)
                     startWatch(config.path);
-            } 
+            }
             else {
                 message = 'Sync: error';
                 console.log(err);
@@ -502,10 +502,33 @@ function gitSync() {
     )
 }
 
-/**
- * Read a JSON file and execute a callback function
- *
- */
+function saveConfig() {
+    writeJSON('config/config.json', config, function(err) {
+        emitter.emit('saveConfig', err);
+    });
+}
+
+function writeJSON(file, data, callback) {
+        try {
+            var data = JSON.stringify(data);
+            fs.writeFile(baseDir + file, data, function(err) {
+                if (err) {
+                    console.log('There has been an error saving your configuration data.');
+                    console.log(err.message);
+                    callback(err);
+                }
+                callback();
+                console.log('Configuration saved successfully.')
+            });
+        }
+        catch (err) {
+            callback(err);
+        }
+    }
+    /**
+     * Read a JSON file and execute a callback function
+     *
+     */
 function readJSON(file, callback) {
     try {
         var data = fs.readFileSync(file),
@@ -532,11 +555,13 @@ var watchToggle = function() {
         watcher.close();
         iswatch = false;
         terminal.output(nl2br('\nWatcher: <strong>off</strong>'));
+
     }
     else {
         startWatch(repo.path);
         terminal.output(nl2br('\nWatcher: <strong>on</strong>'));
     }
+    saveConfig();
 };
 var commitToggle = function() {
     if (config.autocommit) {
@@ -547,6 +572,7 @@ var commitToggle = function() {
         config.autocommit = true;
         terminal.output(nl2br('\nAuto-Commit: <strong>on</strong>'));
     }
+    saveConfig();
 };
 var syncToggle = function() {
     if (config.autosync) {
@@ -557,6 +583,7 @@ var syncToggle = function() {
         config.autosync = true;
         terminal.output(nl2br('\nAuto-Sync: <strong>on</strong>'));
     }
+    saveConfig();
 };
 
 $(document).ready(function() {
@@ -579,9 +606,26 @@ $(document).ready(function() {
         text: textOnOff,
 
     });
+    $('#console').toggles({
+        on: config.opendebug,
+        text: textOnOff,
+
+    });
     $('#toggler').click(watchToggle);
     $('#auto-commit').click(commitToggle);
     $('#auto-sync').click(syncToggle);
     $('#commitNow').click(processStatus)
     $('#syncNow').click(gitSync)
+    $('#syncNow').click(gitSync)
+    $('#console').on('toggle', function(e, active) {
+        if (active) {
+            win.showDevTools();
+            config.opendebug = true;
+        }
+        else {
+            config.opendebug = false;
+            win.closeDevTools();
+        }
+        saveConfig();
+    });
 });
