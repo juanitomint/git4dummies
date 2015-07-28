@@ -614,7 +614,13 @@ $(document).ready(function() {
     $('#toggler').click(watchToggle);
     $('#auto-commit').click(commitToggle);
     $('#auto-sync').click(syncToggle);
-    $('#commitNow').click(processStatus)
+    $('#commitNow').click(function() {
+        var autocommit = config.autocommit;
+        config.autocommit = true;
+        processStatus();
+        config.autocommit = autocommit;
+
+    })
     $('#syncNow').click(gitSync)
     $('#syncNow').click(gitSync)
     $('#console').on('toggle', function(e, active) {
