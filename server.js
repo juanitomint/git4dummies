@@ -254,6 +254,10 @@ function processStatus() {
                             break;
                         case 'A':
                             break;
+                        case 'M':
+                               gitAdd(path);
+                               doCommit=true;
+                            break;
                         case 'MM':
                             break;
                         case 'AM':
@@ -312,7 +316,7 @@ function processStatus() {
                             break;
                         default:
                             //---add untracked
-                            if (!st.tracked) {
+                             if (!st.tracked) {
                                 // msg="";
                                 if (path.indexOf(config.keepedPrefix) != -1) {
                                     if (config.commitConflicted) {
@@ -327,7 +331,7 @@ function processStatus() {
                                     gitAdd(path);
 
                                 }
-                            }
+                             }
                             break;
 
                     }
