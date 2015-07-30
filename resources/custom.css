@@ -33,3 +33,8 @@
     padding: 5px;
     border-radius: 5px;
 }
+
+.error {
+    coor: red;
+    font-weight:bold;
+}

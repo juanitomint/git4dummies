@@ -54,8 +54,7 @@ try {
 catch (e) {
     console.log("Running in node server mode");
     hasnw = false;
-    autocommit = true;
-    autosync = true;
+    
 }
 
 if (hasnw) {
@@ -153,7 +152,9 @@ if (hasnw) {
 
 gitConfig();
 processStatus();
-
+if(config.autosync){
+    gitSync();
+}
 //gitBranch(gitSync);
 
 function queuer() {
@@ -402,8 +403,12 @@ function gitConfig(callback) {
             user.email = config.items['user.email'];
             emitter.emit('gitConfig', err, config);
             repo.branch(function(err, branch) {
+                if(err){
+                    terminal.output('<br/><span class="error">'+nl2br(err.message)+'</span>');
+                } else{
                 terminal.output(nl2br('\nOn branch:' + branch.name));
                 terminal.setPrompt('git [' + branch.name + '] ');
+                }
             })
             if (callback)
                 callback(err, config);
@@ -627,8 +632,7 @@ $(document).ready(function() {
         config.autocommit = autocommit;
 
     })
-    $('#syncNow').click(gitSync)
-    $('#syncNow').click(gitSync)
+    $('#syncNow').click(gitSync);
     $('#console').on('toggle', function(e, active) {
         if (active) {
             win.showDevTools();
