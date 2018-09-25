@@ -1,4 +1,3 @@
-var colors = require('colors');
 console.log('.---------------------------.');
 console.log('| *      GIT4DUMMIES        |');
 console.log('.---------------------------.');
@@ -13,12 +12,11 @@ var git = require("./js/gift-sync");
 var events = require('events');
 var emitter = new events.EventEmitter();
 var chokidar = require('chokidar');
-var utf8 = require('utf8');
 var watcher;
 var async = require('async');
 var nl2br = require('nl2br');
 var exec = require('child_process').execSync;
-
+var moment = require('moment');
 
 //----load config
 console.log('LOADING CONFIG:');
@@ -45,6 +43,8 @@ var gitworking = false;
 var hasnw = true;
 var autocommit = false;
 var autosync = false;
+var firstwatch = false;
+var iswatch = false;
 var q;
 var user = {};
 var git_config = {};
@@ -54,9 +54,9 @@ try {
 catch (e) {
     console.log("Running in node server mode");
     hasnw = false;
-    autocommit = true;
-    autosync = true;
+    
 }
+
 if (hasnw) {
     // var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see https://github.com/rogerwang/node-webkit/issues/707)
     // Get the current window
@@ -114,7 +114,7 @@ if (hasnw) {
                         })
                         return '';
                 };
-                
+
             }
         });
     }
@@ -132,11 +132,17 @@ if (hasnw) {
     });
     emitter.on('gitConfig', function(err, config) {
         console.log('catch: gitConfig', err, config);
-        terminal.output('welcome:' + user.name);
+        terminal.output(moment().format('hh:mm') + '\nwelcome:' + user.name);
+    });
+    emitter.on('gitCommit', function(err, message) {
+        terminal.output('<hr/>' + moment().format('hh:mm') + '\n' + nl2br(message) + '<hr/>');
     });
 
     emitter.on('gitBranch', function(err, branch) {
         terminal.setPrompt('git [' + branch.name + '] ');
+    });
+    emitter.on('gitSync', function(err, message) {
+        terminal.output(nl2br('\n' + message));
     });
     terminal.output('<h1>GIT4DUMMIES</h1>');
 }
@@ -146,7 +152,9 @@ if (hasnw) {
 
 gitConfig();
 processStatus();
-
+if(config.autosync){
+    gitSync();
+}
 //gitBranch(gitSync);
 
 function queuer() {
@@ -213,9 +221,13 @@ function startWatch(path) {
             log('Error happened', error);
         })
         .on('ready', function() {
-            msg = path + "\nInitial scan complete. Ready for changes."
-            emitter.emit('watcherReady', msg);
-            log(msg);
+            iswatch = true;
+            if (!firstwatch) {
+                msg = path + "\nInitial scan complete. Ready for changes."
+                emitter.emit('watcherReady', msg);
+                firstwatch = true;
+                log(msg);
+            }
         })
         //   .on('raw', function(event, path, details) { log('Raw event info:', event, path, details); })
 }
@@ -242,6 +254,12 @@ function processStatus() {
                             doCommit = true;
                             break;
                         case 'A':
+                            gitAdd(path);
+                            doCommit = true;
+                            break;
+                        case 'M':
+                            gitAdd(path);
+                            doCommit = true;
                             break;
                         case 'MM':
                             break;
@@ -323,12 +341,17 @@ function processStatus() {
                     console.log('---------------------------');
                 } //---end forEach
             );
-            if (doCommit) {
+            if (doCommit && config.autocommit) {
                 console.log('Make Commit ');
-                repo.commit('Saved changes:\n' + msg.join('\n'), {
+                var message = 'Saved changes:\n' + msg.join('\n');
+                repo.commit(message, {
                     'all': true
                 }, function(err) {
                     if (err) console.log(err);
+                    emitter.emit('gitCommit', err, message);
+                    if (config.autosync) {
+                        gitSync();
+                    }
                 });
             }
             startWatch(repo.path);
@@ -380,8 +403,12 @@ function gitConfig(callback) {
             user.email = config.items['user.email'];
             emitter.emit('gitConfig', err, config);
             repo.branch(function(err, branch) {
+                if(err){
+                    terminal.output('<br/><span class="error">'+nl2br(err.message)+'</span>');
+                } else{
                 terminal.output(nl2br('\nOn branch:' + branch.name));
                 terminal.setPrompt('git [' + branch.name + '] ');
+                }
             })
             if (callback)
                 callback(err, config);
@@ -465,24 +492,54 @@ function gitBranch(callback) {
  */
 function gitSync() {
     console.log('Syncing...');
+    //----close watcher if running
+    if (iswatch)
+        watcher.close();
     repo.sync(currentRemote, currentBranch,
         function(err) {
+            var message = '';
             if (!err) {
-                console.log('Synced: ' + 'ok'.green);
-                startWatch(config.path);
-                emitter.emit('gitSync', err);
+                message = 'Synced: ok';
+                //----start watcher
+                if (iswatch)
+                    startWatch(config.path);
             }
             else {
+                message = 'Sync: error';
                 console.log(err);
             }
+            emitter.emit('gitSync', err, message);
         }
     )
 }
 
-/**
- * Read a JSON file and execute a callback function
- *
- */
+function saveConfig() {
+    writeJSON('config/config.json', config, function(err) {
+        emitter.emit('saveConfig', err);
+    });
+}
+
+function writeJSON(file, data, callback) {
+        try {
+            var data = JSON.stringify(data);
+            fs.writeFile(baseDir + file, data, function(err) {
+                if (err) {
+                    console.log('There has been an error saving your configuration data.');
+                    console.log(err.message);
+                    callback(err);
+                }
+                callback();
+                console.log('Configuration saved successfully.')
+            });
+        }
+        catch (err) {
+            callback(err);
+        }
+    }
+    /**
+     * Read a JSON file and execute a callback function
+     *
+     */
 function readJSON(file, callback) {
     try {
         var data = fs.readFileSync(file),
@@ -504,3 +561,87 @@ function readJSON(file, callback) {
         callback({}, err);
     }
 }
+var watchToggle = function() {
+    if (iswatch) {
+        watcher.close();
+        iswatch = false;
+        terminal.output(nl2br('\nWatcher: <strong>off</strong>'));
+
+    }
+    else {
+        startWatch(repo.path);
+        terminal.output(nl2br('\nWatcher: <strong>on</strong>'));
+    }
+    saveConfig();
+};
+var commitToggle = function() {
+    if (config.autocommit) {
+        config.autocommit = false;
+        terminal.output(nl2br('\nAuto-Commit: <strong>off</strong>'));
+    }
+    else {
+        config.autocommit = true;
+        terminal.output(nl2br('\nAuto-Commit: <strong>on</strong>'));
+    }
+    saveConfig();
+};
+var syncToggle = function() {
+    if (config.autosync) {
+        config.autosync = false;
+        terminal.output(nl2br('\nAuto-Sync: <strong>off</strong>'));
+    }
+    else {
+        config.autosync = true;
+        terminal.output(nl2br('\nAuto-Sync: <strong>on</strong>'));
+    }
+    saveConfig();
+};
+
+$(document).ready(function() {
+    var textOnOff = {
+        on: '&nbsp;&nbsp;&nbsp;ON', // text for the ON position
+        off: '&nbsp;OFF' // and off
+    }
+    $('#toggler').toggles({
+        on: true,
+        text: textOnOff,
+
+    });
+    $('#auto-commit').toggles({
+        on: config.autocommit,
+        text: textOnOff,
+
+    });
+    $('#auto-sync').toggles({
+        on: config.autosync,
+        text: textOnOff,
+
+    });
+    $('#console').toggles({
+        on: config.opendebug,
+        text: textOnOff,
+
+    });
+    $('#toggler').click(watchToggle);
+    $('#auto-commit').click(commitToggle);
+    $('#auto-sync').click(syncToggle);
+    $('#commitNow').click(function() {
+        var autocommit = config.autocommit;
+        config.autocommit = true;
+        processStatus();
+        config.autocommit = autocommit;
+
+    })
+    $('#syncNow').click(gitSync);
+    $('#console').on('toggle', function(e, active) {
+        if (active) {
+            win.showDevTools();
+            config.opendebug = true;
+        }
+        else {
+            config.opendebug = false;
+            win.closeDevTools();
+        }
+        saveConfig();
+    });
+});
